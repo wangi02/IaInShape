@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(python -m backend.init_db:*)",
+      "Bash(python:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx:*)",
+      "Bash(pip install:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

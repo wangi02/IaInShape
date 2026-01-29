@@ -4,7 +4,8 @@ Session Model: Handles session tracking and daily credit limits.
 """
 
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timedelta
+from typing import List, Dict, Any, Optional
 from backend.config import USERS_DB
 
 
@@ -64,6 +65,42 @@ def update_session_score(session_id: int, score: int) -> bool:
         return False
     finally:
         conn.close()
+
+
+def get_user_history(user_id: int, days: int = 30) -> Optional[List[Dict[str, Any]]]:
+    """
+    Get session history for the last N days.
+    Returns None if user_id doesn't exist.
+    Returns list of dicts with (date, score, duration_seconds, session_count).
+    Ordered chronologically (oldest first).
+    """
+    conn = sqlite3.connect(USERS_DB)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    # Check user exists
+    cur.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+    if not cur.fetchone():
+        conn.close()
+        return None
+
+    cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+
+    cur.execute("""
+        SELECT
+            session_date AS date,
+            SUM(score) AS total_score,
+            SUM(duration_seconds) AS total_duration,
+            COUNT(*) AS session_count
+        FROM sessions
+        WHERE user_id = ? AND session_date >= ?
+        GROUP BY session_date
+        ORDER BY session_date ASC
+    """, (user_id, cutoff))
+
+    history = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return history
 
 
 def get_user_sessions(user_id: int, limit: int = 10) -> list:

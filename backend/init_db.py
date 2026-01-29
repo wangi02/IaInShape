@@ -6,6 +6,8 @@ Creates and seeds the SQLite databases with boxing-specific data.
 
 import sqlite3
 import os
+from datetime import date, timedelta
+import random
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -112,9 +114,11 @@ def init_users_db():
     cur = conn.cursor()
     
     # Drop existing tables
-    cur.execute("DROP TABLE IF EXISTS users")
+    cur.execute("DROP TABLE IF EXISTS sessions")
+    cur.execute("DROP TABLE IF EXISTS exercises")
     cur.execute("DROP TABLE IF EXISTS injuries")
     cur.execute("DROP TABLE IF EXISTS performance")
+    cur.execute("DROP TABLE IF EXISTS users")
     
     # Create users table
     cur.execute("""
@@ -171,25 +175,46 @@ def init_users_db():
         description TEXT,
         image_url TEXT,
         category TEXT DEFAULT 'general',
+        type TEXT DEFAULT 'Renforcement',
         intensity TEXT DEFAULT 'medium',
         duration_seconds INTEGER DEFAULT 30
     )
     """)
+
+    # Index for history queries
+    cur.execute("""
+    CREATE INDEX IF NOT EXISTS idx_sessions_user_date
+    ON sessions (user_id, session_date)
+    """)
     
-    # Seed exercises
+    # Seed exercises (name, description, image_url, category, type, intensity, duration_seconds)
     exercises = [
-        ("Jumping Jacks", "20 repetitions", "/static/img/jumping_jacks.png", "warmup", "medium", 30),
-        ("Etirements bras", "Tenir 15 secondes chaque bras", "/static/img/arm_stretch.png", "warmup", "low", 30),
-        ("Rotations cou", "10 dans chaque sens", "/static/img/neck_rotation.png", "warmup", "low", 20),
-        ("Pompes murales", "10 repetitions", "/static/img/wall_pushups.png", "strength", "low", 30),
-        ("Squats", "15 repetitions", "/static/img/squats.png", "strength", "medium", 45),
-        ("Planche", "Tenir 20 secondes", "/static/img/plank.png", "core", "medium", 20),
-        ("Shadow Jab", "30 jabs lents", "/static/img/shadow_jab.png", "technique", "low", 30),
-        ("Respiration profonde", "5 cycles inspir-expir", "/static/img/breathing.png", "recovery", "low", 60),
+        # Warmup
+        ("Jumping Jacks", "20 repetitions", None, "warmup", "Cardio", "medium", 30),
+        ("Etirements bras", "Tenir 15 secondes chaque bras", None, "warmup", "Souplesse", "low", 30),
+        ("Rotations cou", "10 dans chaque sens", None, "warmup", "Souplesse", "low", 20),
+        # Cardio
+        ("Burpees", "10 repetitions explosives", None, "general", "Cardio", "high", 45),
+        ("Mountain Climbers", "30 secondes rapides", None, "general", "Cardio", "high", 30),
+        ("Corde à sauter (shadow)", "1 minute sans corde", None, "general", "Cardio", "medium", 60),
+        ("Course sur place", "Genoux hauts, 1 minute", None, "general", "Cardio", "low", 60),
+        # Renforcement
+        ("Pompes", "15 repetitions", None, "strength", "Renforcement", "medium", 45),
+        ("Pompes murales", "10 repetitions", None, "strength", "Renforcement", "low", 30),
+        ("Squats", "15 repetitions", None, "strength", "Renforcement", "medium", 45),
+        ("Planche", "Tenir 30 secondes", None, "core", "Renforcement", "medium", 30),
+        ("Gainage latéral", "20 secondes chaque côté", None, "core", "Renforcement", "high", 40),
+        # Souplesse
+        ("Étirement quadriceps", "15 sec chaque jambe", None, "recovery", "Souplesse", "low", 30),
+        ("Étirement épaules", "Bras croisé devant, 15 sec", None, "recovery", "Souplesse", "low", 30),
+        ("Posture du chat", "10 cycles dos rond / dos creux", None, "recovery", "Souplesse", "low", 40),
+        # Technique
+        ("Shadow Jab", "30 jabs lents", None, "technique", "Renforcement", "low", 30),
+        ("Respiration profonde", "5 cycles inspir-expir", None, "recovery", "Souplesse", "low", 60),
     ]
     cur.executemany("""
-        INSERT INTO exercises (name, description, image_url, category, intensity, duration_seconds)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO exercises (name, description, image_url, category, type, intensity, duration_seconds)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, exercises)
     
     # Sample users (as per project requirements: 5 pre-registered profiles)
@@ -216,6 +241,23 @@ def init_users_db():
             INSERT INTO performance (user_id, current_fatigue, guard_accuracy, total_sessions)
             VALUES (?, 0.0, 1.0, 0)
         """, (user[0],))
+
+    # Seed demo session history (last 10 days for users 1, 2, 3)
+    today = date.today()
+    demo_sessions = []
+    for user_id in [1, 2, 3]:
+        for day_offset in range(10):
+            d = (today - timedelta(days=day_offset)).isoformat()
+            # 1-2 sessions per day with random scores
+            num_sessions = random.randint(1, 2)
+            for _ in range(num_sessions):
+                score = random.randint(3, 15)
+                demo_sessions.append((user_id, d, "Normal", score, 30))
+
+    cur.executemany("""
+        INSERT INTO sessions (user_id, session_date, mood, score, duration_seconds)
+        VALUES (?, ?, ?, ?, ?)
+    """, demo_sessions)
     
     conn.commit()
     conn.close()

@@ -36,6 +36,46 @@ def get_user_profile(user_id: int):
     return jsonify(user), 200
 
 
+@api.route("/users/<int:user_id>/history", methods=["GET"])
+def get_user_history(user_id: int):
+    """
+    Get session history for a user over the last N days.
+    Query param: ?days=N (default 30, max 365)
+
+    Success (200):
+    {
+        "user_id": 1,
+        "days": 30,
+        "history": [
+            {"date": "2026-01-25", "total_score": 12, "total_duration": 60, "session_count": 2},
+            ...
+        ]
+    }
+
+    Error (404): {"error": "User not found"}
+    Error (400): {"error": "Invalid days parameter"}
+    """
+    from backend.models.session import get_user_history as fetch_history
+
+    days_param = request.args.get("days", "30")
+    try:
+        days = int(days_param)
+        if days < 1 or days > 365:
+            return jsonify({"error": "days must be between 1 and 365"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid days parameter"}), 400
+
+    history = fetch_history(user_id, days)
+    if history is None:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify({
+        "user_id": user_id,
+        "days": days,
+        "history": history
+    }), 200
+
+
 @api.route("/adapt", methods=["POST"])
 def get_adaptation():
     """
@@ -233,6 +273,21 @@ def get_warmup_exercises():
     
     exercises = get_exercises(category="warmup")
     return jsonify({"exercises": exercises}), 200
+
+
+@api.route("/exercises/smart", methods=["GET"])
+def get_smart_workout():
+    """
+    Get a smart exercise recommendation based on user status.
+    Query params: ?status=Fatigué&last_type=Cardio
+    """
+    from backend.models.exercise import get_smart_workout as fetch_workout
+
+    status = request.args.get("status", "Normal")
+    last_type = request.args.get("last_type")
+
+    exercise = fetch_workout(status, last_type)
+    return jsonify({"exercise": exercise}), 200
 
 
 @api.route("/exercises/workout/<string:weakness>", methods=["GET"])

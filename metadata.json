@@ -1,7 +1,0 @@
-{
-  "description": "Adaptive Boxing Coach with MediaPipe Pose Estimation.",
-  "requestFramePermissions": [
-    "camera"
-  ],
-  "name": "Adaptive Boxing Coach"
-}
