@@ -1,20 +1,23 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# IA In Shape - Plateforme d'IA pour l'Entraînement Physique
 
-# Exécuter et déployer votre application AI Studio
+## 📋 Présentation
 
-Ce dépôt contient tout ce dont vous avez besoin pour exécuter votre application localement.
+**IA In Shape** est une application web alimentée par l'IA générative permettant aux utilisateurs de recevoir des recommandations d'entraînement et des conseils fitness personnalisés. Cette plateforme combine des systèmes adaptatifs et interactifs pour offrir une expérience d'entraînement sur mesure.
 
-Voir votre application dans AI Studio : https://ai.studio/apps/drive/1yLPnH1pbzAIW5a0-xxePN9CBBrnD8XGp
+L'application a été développée dans le cadre d'un projet académique explorant les systèmes de recommandation adaptatifs et interactifs.
 
-## Exécution Locale
+**Consulter l'application :** https://ai.studio/apps/drive/1yLPnH1pbzAIW5a0-xxePN9CBBrnD8XGp
 
-**Prérequis :** Node.js
+---
 
+## 🚀 Démarrage Rapide
 
-1. Installer les dépendances :
-   `npm install`
-2. Définir la variable `GEMINI_API_KEY` dans [.env.local](.env.local) avec votre clé API Gemini
-3. Lancer l'application :
-   `npm run dev`
+### Prérequis
+- **Node.js** (v14 ou supérieur)
+- Une clé API **Google Gemini**
+
+### Installation
+
+1. **Cloner le dépôt et installer les dépendances :**
+   ```bash
+   npm install
